@@ -59,6 +59,7 @@ namespace SourceDefender {
                 var r=Store.Load().FirstOrDefault(x=>x.Id==id&&(x.Mode??Human)==mode);
                 if(r==null)throw new ArgumentException("No matching "+mode+" incident exists.");
                 if(r.Status!="Active")throw new InvalidOperationException("This incident has already ended.");
+                if(mode==Agent&&command=="hint")throw new InvalidOperationException("Hints are unavailable in agent practice.");
                 r.Findings=new List<PublicFinding>();
                 string report;
                 if(command=="end") {

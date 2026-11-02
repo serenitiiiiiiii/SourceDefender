@@ -18,7 +18,7 @@ ENGINE = ROOT / ("SourceDefender.Engine.exe" if os.name == "nt" else "SourceDefe
 TIMEOUT = 45
 TOOLS = {
     "list_scenarios", "start_run", "get_run_status",
-    "validate_changes", "request_hint", "end_run",
+    "validate_changes", "end_run",
 }
 PRIVATE_KEYS = {"broken", "revealed", "requiredfiles", "templateversion", "attackids"}
 FINDING_TITLES = (
@@ -288,7 +288,7 @@ def check_lifecycle(root):
         assert [item["id"] for item in scenarios["difficulties"]] == list(range(4)), scenarios
         assert scenarios["difficulties"][3]["attack_count"] == 16, scenarios
         assert scenarios["difficulties"][3]["failed_validation_penalty_seconds"] == 180, scenarios
-        assert scenarios["difficulties"][3]["hint_penalty_seconds"] == 120, scenarios
+        assert all("hint_penalty_seconds" not in item for item in scenarios["difficulties"]), scenarios
         assert client.tool("get_run_status")["run"] is None
         check_invalid_starts(client, store, folder)
 
@@ -334,17 +334,13 @@ def check_lifecycle(root):
             assert not any(title in report for title in FINDING_TITLES), report
             assert not any(path in report for path in private.get("requiredfiles", [])), report
 
-        hinted = client.tool("request_hint", {"run_id": identifier})
-        assert hinted["run"]["status"] == "Active", hinted
-        assert hinted["run"]["hints"] == 1 and hinted["run"]["penalty_seconds"] == 300, hinted
-        assert hinted["run"]["validation_attempts"] == 1, hinted
-        assert isinstance(hinted["report"], str) and hinted["report"], hinted
-        assert hinted["report"] != failed["report"], hinted
-        public_values(hinted, attack_ids)
+        before_hint = records(store)
+        client.expect_tool_error("request_hint", {"run_id": identifier})
+        assert records(store) == before_hint, "Unavailable hint changed the active run"
 
         ended = client.tool("end_run", {"run_id": identifier})
         assert ended["run"]["status"] == "Abandoned", ended
-        assert ended["run"]["penalty_seconds"] == 300 and project.is_dir(), ended
+        assert ended["run"]["penalty_seconds"] == 180 and project.is_dir(), ended
         public_values(ended, attack_ids)
         for arguments in ({}, {"run_id": identifier}):
             status = client.tool("get_run_status", arguments)
@@ -359,8 +355,8 @@ def check_lifecycle(root):
             status = restarted.tool("get_run_status", arguments)
             run = status["run"]
             assert run["id"] == identifier and run["status"] == "Abandoned", status
-            assert run["mode"] == "agent_practice" and run["penalty_seconds"] == 300, status
-            assert run["validation_attempts"] == 1 and run["hints"] == 1, status
+            assert run["mode"] == "agent_practice" and run["penalty_seconds"] == 180, status
+            assert run["validation_attempts"] == 1 and run["hints"] == 0, status
             public_values(status, attack_ids)
         restarted.ping()
     print("PASS: MCP negotiation, schemas, input validation, private metadata, run lifecycle, and persistence", flush=True)
@@ -470,8 +466,8 @@ def check_containment_and_mode_isolation(root):
 
         failed = client.tool("validate_changes", {"run_id": agent_id})
         assert failed["run"]["status"] == "Active" and failed["run"]["penalty_seconds"] == 15, failed
-        hinted = client.tool("request_hint", {"run_id": agent_id})
-        assert hinted["run"]["hints"] == 1 and hinted["run"]["penalty_seconds"] == 35, hinted
+        hinted = cli(store, {"command": "hint", "id": human_id})
+        assert hinted["Run"]["Hints"] == 1 and hinted["Run"]["PenaltySeconds"] == 20, hinted
         project = pathlib.Path(agent["folder"])
         assert shutil.which("git"), "Git is required to restore the trusted containment fixture"
         baseline = subprocess.check_output(
@@ -486,10 +482,10 @@ def check_containment_and_mode_isolation(root):
         contained = client.tool("validate_changes", {"run_id": agent_id})
         result = contained["run"]
         assert result["status"] == "Contained" and result["mode"] == "agent_practice", contained
-        assert result["validation_attempts"] == 2 and result["hints"] == 1, contained
-        assert result["penalty_seconds"] == 35 and result["elapsed_seconds"] >= 35, contained
+        assert result["validation_attempts"] == 2 and result["hints"] == 0, contained
+        assert result["penalty_seconds"] == 15 and result["elapsed_seconds"] >= 15, contained
         frozen_seconds = result["elapsed_seconds"]
-        frozen_score = max(100, 5000 - int(frozen_seconds) - 2 * 50 - 100)
+        frozen_score = max(100, 5000 - int(frozen_seconds) - 2 * 50)
         assert result["score"] == frozen_score, contained
         public_values(contained, attack_ids)
         assert project.is_dir() and (project / "README.md").is_file()
@@ -513,8 +509,8 @@ def check_containment_and_mode_isolation(root):
             result = status["run"]
             assert result["id"] == agent_id and result["status"] == "Contained", status
             assert result["elapsed_seconds"] == frozen_seconds and result["score"] == frozen_score, status
-            assert result["penalty_seconds"] == 35 and result["validation_attempts"] == 2, status
-            assert result["hints"] == 1 and result["mode"] == "agent_practice", status
+            assert result["penalty_seconds"] == 15 and result["validation_attempts"] == 2, status
+            assert result["hints"] == 0 and result["mode"] == "agent_practice", status
             public_values(status, attack_ids)
         restarted.ping()
     print("PASS: human/agent isolation, sanitized snapshots, containment, frozen score/timer, and persistence", flush=True)

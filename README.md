@@ -73,8 +73,9 @@ repository in another editor, or play through the optional VS Code extension.
 
 Coding agents can play through the bundled engine's **local stdio MCP mode**:
 launch `SourceDefender.Engine.exe --mcp` on Windows, or `SourceDefender.Engine --mcp`
-on Linux/macOS. The six tools list scenarios, start an agent incident, report
-status, validate saved changes, provide hints, and end a run. The agent edits
+on Linux/macOS. The five tools list scenarios, start an agent incident, report
+status, validate saved changes, and end a run. Hints are unavailable in agent
+practice. The agent edits
 the generated repository using its normal file tools.
 
 Open **Agent watch** from the main menu to observe its timer, game tool
@@ -91,7 +92,8 @@ benchmark or security sandbox; local agents have the same history restrictions a
 
 We ran GPT-6.1 Terra, GPT-6.1 Sol, GPT-6 Astra, and Daybreak Blue at six
 reasoning effort levels on the same JavaScript **Zero trust** incident without
-Git history. All 24 configurations contained the incident.
+Git history. All 24 configurations contained the incident. These historical runs
+allowed hints; newer agent-practice runs do not.
 
 ![SourceDefender Zero trust benchmark: score versus scored time](docs/benchmark/score-vs-time.png)
 

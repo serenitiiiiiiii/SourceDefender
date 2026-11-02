@@ -19,8 +19,8 @@ namespace SourceDefender {
             builder.Logging.AddConsole(options=>options.LogToStandardErrorThreshold=LogLevel.Trace);
             builder.Logging.SetMinimumLevel(LogLevel.Warning);
             builder.Services.AddMcpServer(options=> {
-                options.ServerInfo=new Implementation {Name="SourceDefender",Version="0.6.1"};
-                options.ServerInstructions="SourceDefender agent practice. Use list_scenarios then start_run. Investigate and edit the returned local repository with your own file tools, save changes, and call validate_changes. Hints and unsuccessful validation add time. Runs are practice exercises, not a secure benchmark. This server never executes generated code. The desktop Agent practice view can observe progress. Human incidents are separate.";
+                options.ServerInfo=new Implementation {Name="SourceDefender",Version="0.6.2"};
+                options.ServerInstructions="SourceDefender agent practice. Use list_scenarios then start_run. Investigate and edit the returned local repository with your own file tools, save changes, and call validate_changes. Hints are unavailable in agent practice; unsuccessful validation adds time. Runs are practice exercises, not a secure benchmark. This server never executes generated code. The desktop Agent practice view can observe progress. Human incidents are separate.";
             }).WithStdioServerTransport().WithTools<PracticeTools>(new JsonSerializerOptions(McpJsonUtilities.DefaultOptions) {
                 NumberHandling=JsonNumberHandling.Strict
             });
@@ -58,7 +58,7 @@ namespace SourceDefender {
             scenarios=Scenario.All.Select((s,i)=>new{id=i,name=s.Name,description=s.Description,mission=s.Mission}).ToArray(),
             languages=Catalog.Languages,
             difficulties=Difficulty.All.Select((d,i)=>new{id=i,name=d.Name,attack_count=d.Bugs,
-                failed_validation_penalty_seconds=d.Penalty,hint_penalty_seconds=d.HintCost,encoding_layers=i}).ToArray(),
+                failed_validation_penalty_seconds=d.Penalty,encoding_layers=i}).ToArray(),
             mode=GameService.Agent
         });}
 
@@ -93,10 +93,6 @@ namespace SourceDefender {
         [McpServerTool(Name="validate_changes",Destructive=false,OpenWorld=false)]
         [Description("Validate saved files in an active agent run. A failed validation adds the difficulty's time penalty. Passing validation ends the run. Feedback follows the same difficulty rules as human play. Does not execute project code.")]
         public static CallToolResult ValidateChanges([Description("Active agent run ID.")] string run_id) {return Act(run_id,"validate");}
-
-        [McpServerTool(Name="request_hint",Destructive=false,OpenWorld=false)]
-        [Description("Reveal one hint for an unresolved control, adding the difficulty's hint time penalty. Repeated hints for already revealed controls are not charged.")]
-        public static CallToolResult RequestHint([Description("Active agent run ID.")] string run_id) {return Act(run_id,"hint");}
 
         [McpServerTool(Name="end_run",Destructive=true,OpenWorld=false)]
         [Description("End an active agent incident as abandoned. Files stay on disk; this does not delete the generated repository or affect human runs.")]

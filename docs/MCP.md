@@ -41,7 +41,6 @@ stdout and sends diagnostics to stderr.
 | `start_run` | Generate an incident and start the timer |
 | `get_run_status` | Read an agent incident's clock, counters, status, and latest feedback |
 | `validate_changes` | Check saved repairs; add a penalty on failure or finish on success |
-| `request_hint` | Buy one hint using the normal difficulty penalty |
 | `end_run` | Abandon the agent incident while preserving its files |
 
 Example `start_run` arguments:
@@ -70,7 +69,8 @@ Review the repository, save edits, then call `validate_changes`.
 
 Open the desktop app and select **Agent practice** in the sidebar. It refreshes
 the most recent agent run's status and activity automatically, including the
-timer, hints, validation attempts, and game-tool-call count. Human incidents and
+timer, validation attempts, and game-tool-call count. Historical runs can also
+show hints used before hints were disabled. Human incidents and
 agent incidents can each have one active run. Agent tools cannot alter human
 runs, and desktop human controls cannot alter an agent run.
 
@@ -81,12 +81,11 @@ directories can host independent agent sessions concurrently.
 
 ## Rules and limits
 
-- The engine owns time, penalties, hints, completion, and run persistence.
+- The engine owns time, penalties, completion, and run persistence.
 - The clock starts on generation and continues after the client disconnects.
 - Tool responses expose public run information and difficulty-appropriate
   feedback, not injected attack IDs, answer templates, or internal manifests.
-- A hint intentionally reveals a location and remediation after charging its
-  normal time penalty.
+- Hints are unavailable in agent practice. Human incidents can still use them.
 - `tool_calls` counts the start and successful run-scoped game calls, including
   status polls. It does not count the agent client's separate file tools, model
   tokens, failed requests, or scenario listings.
@@ -110,5 +109,5 @@ python tests/verify_mcp.py
 
 The integration suite drives the actual stdio server through negotiation,
 schema discovery, invalid arguments, highest-difficulty feedback, penalties,
-hints, abandonment, restart persistence, Unicode paths, and simultaneous starts
+hint unavailability, abandonment, restart persistence, Unicode paths, and simultaneous starts
 from two processes. It uses isolated temporary data, leaving player records alone.
