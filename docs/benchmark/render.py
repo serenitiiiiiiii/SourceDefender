@@ -43,9 +43,9 @@ ax.xaxis.set_major_locator(MultipleLocator(1000))
 ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
 ax.yaxis.set_major_locator(MultipleLocator(10))
 ax.set_xlim(18750, 13750)
-ax.set_ylim(10, 76)
+ax.set_ylim(76, 10)
 ax.set_xlabel("SOURCEDEFENDER SCORE     /     HIGHER IS BETTER  ←", fontsize=9, weight="bold", labelpad=20)
-ax.set_ylabel("SCORED TIME  /  MINUTES", fontsize=9, weight="bold", labelpad=19)
+ax.set_ylabel("SCORED TIME  /  MINUTES     LOWER IS BETTER  ↑", fontsize=9, weight="bold", labelpad=19)
 
 for model, _, color in MODELS:
     group = [points[(model, effort)] for effort in EFFORTS]
