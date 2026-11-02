@@ -95,8 +95,9 @@ Git history. All 24 configurations contained the incident.
 
 ![SourceDefender Zero trust benchmark: score versus scored time](docs/benchmark/score-vs-time.png)
 
-The vertical axis includes time penalties for failed validations and hints. Score
-also depends on time and penalties, so the two axes are not independent. This is
+Higher scores appear on the left; each line connects a model's effort levels from
+low through ultra. The vertical axis includes time penalties for failed validations
+and hints. Score also depends on time and penalties, so the two axes are not independent. This is
 one run per configuration on one scenario, with up to three runs in parallel;
 it is an exploratory result, not a general model ranking. Agents had full local
 filesystem access, and multi-agent delegation was disabled for every setting.
